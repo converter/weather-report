@@ -1,16 +1,16 @@
 package mocks
 
 import (
-	"log"
+	"net/http"
 
-	"github.com/converter/weather-report/api"
+	"github.com/stretchr/testify/mock"
 )
 
-type MockAPIClient struct {
-	RequestURL string
+type MockHTTPClient struct {
+	mock.Mock
 }
 
-func (c *MockAPIClient) GetWeatherByCity(city string) (*api.OpenWeatherCurrent, error) {
-	log.Printf("mock http client called.")
-	return &api.OpenWeatherCurrent{}, nil
+func (m *MockHTTPClient) Do(req *http.Request) (*http.Response, error) {
+	args := m.Called(req)
+	return args.Get(0).(*http.Response), args.Error(1)
 }
