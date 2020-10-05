@@ -16,3 +16,4 @@
 
 .idea
 .weather-api-key
+*.json
