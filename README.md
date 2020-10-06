@@ -56,5 +56,5 @@ latlon: 38.505252,-90.430133
 
 ### Author
 David P.C. Wollmann  
-david.wollmann@gmail.com  
+converter42 at gmail dot com
 (918) 994-2422
