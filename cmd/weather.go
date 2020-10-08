@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"strings"
 
 	"encoding/json"
 	"fmt"
@@ -82,6 +83,7 @@ func getAPIKey() (string, error) {
 	}
 	return string(bytes.TrimSpace(b)), nil
 }
+
 func execCmd(opts runOpts) {
 	apikey, err := getAPIKey()
 	if err != nil {
@@ -91,11 +93,16 @@ func execCmd(opts runOpts) {
 	c := &rest.APIClient{HTTPClient: &http.Client{}}
 	switch *opts.searchBy {
 	case "city":
-		weather, err = c.GetWeatherByCity(apikey, *opts.term)
+		term := "q=" + *opts.term
+		weather, err = c.GetWeather(apikey, term)
 	case "zipcode":
-		weather, err = c.GetWeatherByZipCode(apikey, *opts.term)
+		term := "zip=" + *opts.term
+		weather, err = c.GetWeather(apikey, term)
 	case "latlon":
-		weather, err = c.GetWeatherByLatLon(apikey, *opts.term)
+		term := strings.TrimSpace(*opts.term)
+		tokens := strings.Split(*opts.term, ",")
+		term = fmt.Sprintf("lat=%s&lon=%s", tokens[0], tokens[1])
+		weather, err = c.GetWeather(apikey, term)
 	default:
 		usage("unknown searchby option: " + *opts.searchBy)
 		os.Exit(errSearchbyOptionUnknown)
