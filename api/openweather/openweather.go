@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"log"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -68,6 +69,32 @@ type units struct {
 type tmplData struct {
 	*OpenWeatherCurrent
 	Units units
+}
+
+// ComposeRequestURI takes API key, request type t, parameter argument p and returns a request URI.
+func ComposeRequestURI(apiKey, t, p string) (string, error) {
+	var uri string
+
+	switch t {
+	case "city":
+		term := "q=" + p
+		uri = fmt.Sprintf(URLPattern, term, apiKey)
+	case "zipcode":
+		term := "zip=" + p
+		uri = fmt.Sprintf(URLPattern, term, apiKey)
+	case "latlon":
+		term := strings.TrimSpace(p)
+		tokens := strings.Split(term, ",")
+		if len(tokens) < 2 || len(tokens[0]) < 1 || len(tokens[1]) < 1 {
+			return "", fmt.Errorf("invalid lat lon search term: %s", term)
+		}
+		term = fmt.Sprintf("lat=%s&lon=%s", tokens[0], tokens[1])
+		uri = fmt.Sprintf(URLPattern, term, apiKey)
+	default:
+		return "", fmt.Errorf("unknown search type: %s", t)
+	}
+
+	return uri, nil
 }
 
 // PrettyPrint uses a template to print nicely formatted weather output.

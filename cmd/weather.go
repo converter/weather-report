@@ -2,20 +2,19 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"path"
-	"strings"
-
-	"encoding/json"
-	"fmt"
 
 	"net/http"
 
 	"github.com/converter/weather-report/api/openweather"
 	"github.com/converter/weather-report/rest"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -55,7 +54,10 @@ func main() {
 	}
 	opts.term = &args[0]
 
-	execCmd(opts)
+	err := execCmd(opts)
+	if err != nil {
+		fmt.Printf("error %s", err.Error())
+	}
 }
 
 func usage(msg string) {
@@ -84,36 +86,21 @@ func getAPIKey() (string, error) {
 	return string(bytes.TrimSpace(b)), nil
 }
 
-func execCmd(opts runOpts) {
+func execCmd(opts runOpts) error {
 	apikey, err := getAPIKey()
 	if err != nil {
 		log.Printf("")
 	}
 	var weather *openweather.OpenWeatherCurrent
 	c := &rest.APIClient{HTTPClient: &http.Client{}}
-	switch *opts.searchBy {
-	case "city":
-		term := "q=" + *opts.term
-		weather, err = c.GetWeather(apikey, term)
-	case "zipcode":
-		term := "zip=" + *opts.term
-		weather, err = c.GetWeather(apikey, term)
-	case "latlon":
-		term := strings.TrimSpace(*opts.term)
-		tokens := strings.Split(*opts.term, ",")
-		term = fmt.Sprintf("lat=%s&lon=%s", tokens[0], tokens[1])
-		weather, err = c.GetWeather(apikey, term)
-	default:
-		usage("unknown searchby option: " + *opts.searchBy)
-		os.Exit(errSearchbyOptionUnknown)
-	}
+	weather, err = c.GetWeather(apikey, *opts.searchBy, *opts.term)
 	if err != nil {
-		log.Fatalf("error fetching weather: %s", err.Error())
+		errors.Errorf("error fetching weather: %s", err.Error())
 	}
 
 	if *opts.prettyPrint {
 		fmt.Println(weather.PrettyPrint())
-		return
+		return nil
 	}
 
 	b, err := json.Marshal(weather)
@@ -122,4 +109,6 @@ func execCmd(opts runOpts) {
 		os.Exit(errMarshalingWeather)
 	}
 	fmt.Println(string(b))
+
+	return nil
 }

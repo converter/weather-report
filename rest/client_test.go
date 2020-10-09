@@ -12,11 +12,12 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestClient_GetWeather_ByCity(t *testing.T) {
-	query := "q=tulsa,us-ok"
+func TestAPIClient_GetWeather_ByCity(t *testing.T) {
+	term := "tulsa,us-ok"
+	wantedParam := "q=" + term
 	mockHTTPClient := &mocks.MockHTTPClient{}
 	matcher := func(req *http.Request) bool {
-		if strings.Contains(req.URL.RequestURI(), query) {
+		if strings.Contains(req.URL.RequestURI(), wantedParam) {
 			return true
 		}
 		return false
@@ -28,17 +29,18 @@ func TestClient_GetWeather_ByCity(t *testing.T) {
 		nil,
 	)
 	client := &APIClient{HTTPClient: mockHTTPClient}
-	weather, err := client.GetWeather("DUMMYKEY", query)
+	weather, err := client.GetWeather("DUMMYKEY", "city", term)
 	assert.NoError(t, err)
 	assert.Equal(t, "Tulsa", weather.Name)
 	mockHTTPClient.AssertExpectations(t)
 }
 
-func TestClient_GetWeather_ByZipCode(t *testing.T) {
-	query := "zip=62221"
+func TestAPIClient_GetWeather_ByZipCode(t *testing.T) {
+	term := "62221"
+	wantedParam := "zip=" + term
 	mockHTTPClient := &mocks.MockHTTPClient{}
 	matcher := func(req *http.Request) bool {
-		if strings.Contains(req.URL.RequestURI(), query) {
+		if strings.Contains(req.URL.RequestURI(), wantedParam) {
 			return true
 		}
 		return false
@@ -50,18 +52,19 @@ func TestClient_GetWeather_ByZipCode(t *testing.T) {
 		nil,
 	)
 	client := &APIClient{HTTPClient: mockHTTPClient}
-	weather, err := client.GetWeather("DUMMYKEY", query)
+	weather, err := client.GetWeather("DUMMYKEY", "zipcode", term)
 	assert.NoError(t, err)
 	assert.Equal(t, "Belleville", weather.Name)
 	mockHTTPClient.AssertExpectations(t)
 }
 
-func TestClient_GetWeather_ByLatLon(t *testing.T) {
+func TestAPIClient_GetWeather_ByLatLon(t *testing.T) {
 	cityName := "Eastland Heights"
-	query := "lat=36.185904&lon=-115.165393"
+	term := "36.185904,-115.165393"
+	wantedParam := "lat=36.185904&lon=-115.165393"
 	mockHTTPClient := &mocks.MockHTTPClient{}
 	matcher := func(req *http.Request) bool {
-		if strings.Contains(req.URL.RequestURI(), query) {
+		if strings.Contains(req.URL.RequestURI(), wantedParam) {
 			return true
 		}
 		return false
@@ -74,7 +77,7 @@ func TestClient_GetWeather_ByLatLon(t *testing.T) {
 		nil,
 	)
 	client := &APIClient{HTTPClient: mockHTTPClient}
-	weather, err := client.GetWeather("DUMMYKEY", query)
+	weather, err := client.GetWeather("DUMMYKEY", "latlon", term)
 	assert.NoError(t, err)
 	assert.Equal(t, cityName, weather.Name)
 	assert.Equal(t, float32(36.19), weather.Coord.Lat)
@@ -82,7 +85,7 @@ func TestClient_GetWeather_ByLatLon(t *testing.T) {
 	mockHTTPClient.AssertExpectations(t)
 }
 
-func TestClient_GetWeather_Pretty(t *testing.T) {
+func TestAPIClient_GetWeather_Pretty(t *testing.T) {
 	expected := `Tulsa Weather:
 Clear
 Temp             73.0F
@@ -135,11 +138,12 @@ Direction  170 degrees`
   "name": "Tulsa",
   "cod": 200
 }`
-	term := "q=tulsa,us-ok"
+	term := "tulsa,us-ok"
+	wantedParam := "q=" + term
 	mockHTTPClient := &mocks.MockHTTPClient{}
 	client := &APIClient{HTTPClient: mockHTTPClient}
 	matcher := func(req *http.Request) bool {
-		if strings.Contains(req.URL.RequestURI(), term) {
+		if strings.Contains(req.URL.RequestURI(), wantedParam) {
 			return true
 		}
 		return false
@@ -148,7 +152,7 @@ Direction  170 degrees`
 		&http.Response{
 			Body: ioutil.NopCloser(bytes.NewBufferString(jsonBody)),
 		}, nil)
-	weather, err := client.GetWeather("DUMMYKEY", term)
+	weather, err := client.GetWeather("DUMMYKEY", "city", term)
 	assert.NoError(t, err)
 	assert.Equal(t, expected, weather.PrettyPrint())
 	mockHTTPClient.AssertExpectations(t)
