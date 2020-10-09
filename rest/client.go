@@ -3,7 +3,6 @@ package rest
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -20,12 +19,16 @@ type APIClient struct {
 	HTTPClient HTTPer
 }
 
-func (c *APIClient) GetWeather(apikey, query string) (*openweather.OpenWeatherCurrent, error) {
+// GetWeather makes an HTTP request to the OpenWeather API and returns an OpenWeather struct/object or an error.
+func (c *APIClient) GetWeather(apiKey, searchBy, term string) (*openweather.OpenWeatherCurrent, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	requestURL := fmt.Sprintf(openweather.URLPattern, query, apikey)
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
+	uri, err := openweather.ComposeRequestURI(apiKey, searchBy, term)
+	if err != nil {
+		return &openweather.OpenWeatherCurrent{}, err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 	if err != nil {
 		return nil, err
 	}
